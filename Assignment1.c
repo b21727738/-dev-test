@@ -31,7 +31,6 @@ struct command {
 int linecount(FILE *fp) {
 	int line = 0;
 	char ch;
-	printf("x");
 	while(!feof(fp))
 	{
 		ch = fgetc(fp);
@@ -123,11 +122,11 @@ char*** loadmap(int x, int y) {
 	int i, j;
 	char ***map;
 
-	map = (char *)malloc(2 * sizeof(char *));
+	map = (char ***)malloc(2 * sizeof(char **));
 
 
 	for (i = 0; i<2; i++) {
-		map[i] = (char *)malloc(x*sizeof(char *));
+		map[i] = (char **)malloc(x*sizeof(char *));
 		for (j = 0; j<x; j++) {
 			map[i][j] = (char *)malloc(y*x*sizeof(char *));
 		}
