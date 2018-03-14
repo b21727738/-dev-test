@@ -31,6 +31,7 @@ struct command {
 int linecount(FILE *fp) {
 	int line = 0;
 	char ch;
+	printf("x");
 	while(!feof(fp))
 	{
 		ch = fgetc(fp);
