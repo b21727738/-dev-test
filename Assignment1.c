@@ -28,17 +28,29 @@ struct command {
 };
 
 
-int linecount(FILE *fp) {
+int linecount(FILE *fp,int *ptr) {
 	int line = 0;
 	char ch;
-	while(!feof(fp))
+
+	int i=0,itemp=0;	
+	while(1)
 	{
 		ch = fgetc(fp);
-		if (ch == '\n')
+		if (ch == EOF)
+		{
+			break;
+		}
+		else if(ch==10)
 		{
 			line++;
+			i = 0;
+		}
+		i++;
+		if (i>itemp) {
+			itemp = i;
 		}
 	}
+	*ptr = itemp;
 	return line;
 }
 
@@ -153,6 +165,7 @@ struct FoM foP(char *input) {
 	while (*cPtr != ' ') {
 		cPtr = cPtr + 1;
 	}
+
 	letter = TaS(mPtr, cPtr - 1);
 	mPtr = cPtr + 1;
 	subj.name= letter;
@@ -166,9 +179,8 @@ struct FoM foP(char *input) {
 	subj.x = x1;
 	do {
 		cPtr = cPtr + 1;
-		if (*cPtr == '\n'){
-		*cPtr = ' ';
-		}
+		if (*cPtr == '\0')
+			break;
 	} while (*cPtr != ' ');
 
 	y = TaS(mPtr, cPtr - 1);
@@ -180,6 +192,7 @@ struct FoM foP(char *input) {
 }
 
 void put(char *input, char ***map) {
+	
 	char *cPtr, *mPtr, *command;
 	struct FoM temp;
 	int count = 0;
@@ -187,9 +200,11 @@ void put(char *input, char ***map) {
 	mPtr = input;
 	do {
 		
-		if (*cPtr == ' ') {
+		if (*cPtr == ' '){
 			if (count == 2) {
+				
 				command = TaS(mPtr, cPtr);
+				
 				mPtr = cPtr + 1;
 				count = 0;
 				temp = foP(command);
@@ -199,10 +214,14 @@ void put(char *input, char ***map) {
 				count = count + 1;
 			}
 		}
+		
 		cPtr = cPtr + 1;
+		
+		if(*cPtr == 0)
+			break;
 	} while (*cPtr != '\0');
-	command = TaS(mPtr, cPtr);			
-
+	
+	command = TaS(mPtr, cPtr);
 	temp = foP(command);
 	map[1][temp.x][temp.y] = temp.letter;
 
@@ -469,15 +488,19 @@ void move (struct cha *chars,char ***map,int x,int y,char *input) {
 
 int main(int argc, char *argv[]) {
 	char *inp, ***map;
-	char kelam[100];
-	FILE *chPtr,*comPtr,*tPtr;
-	
-	int counter,run=1,lcha=0,lcom=0,i,mapx,mapy;
+	char *kelam;
+	FILE *chPtr,*comPtr,*tPtr,*tPtr2;
+	int counter,lcha=0,lcom=0,i,mapx,mapy,maxchar;
 	tPtr = fopen(argv[1],"r");
-	lcha = linecount(tPtr) + 1;
+	lcha = linecount(tPtr,&maxchar) + 1;
 	struct cha *all = malloc(lcha * sizeof(struct cha));
-	tPtr = fopen(argv[2],"r");
-	lcom = linecount(tPtr) + 1;
+	fclose(tPtr);
+	tPtr=0;
+	tPtr2=0;
+	tPtr2 = fopen(argv[2],"r");
+	lcom = linecount(tPtr2,&maxchar) + 1;
+	fclose(tPtr2);
+	kelam = malloc(maxchar*sizeof(char));
 	struct command *call = malloc(lcom * sizeof(struct command));
  	if ((OP = fopen(argv[3],"w"))==NULL) {
 		printf("File could not be opened");
@@ -488,7 +511,7 @@ int main(int argc, char *argv[]) {
 	else {
 		counter = 0;
 		do {
-			inp = fgets(kelam, 100, chPtr);
+			inp = fgets(kelam, 200, chPtr);
 			if (inp != NULL) {
 				all[counter] = readline(inp);
 				counter = counter + 1;
@@ -496,14 +519,13 @@ int main(int argc, char *argv[]) {
 		} while (inp != NULL);
 		fclose(chPtr);
 	}
-
 	if ((comPtr = fopen(argv[2], "r")) == NULL) {
 		fprintf(OP,"File could not be opened\n");
 	}
 	else {
 		counter = 0;
 		do {
-			inp = fgets(kelam, 100, comPtr);
+			inp = fgets(kelam, 200, comPtr);
 			if (inp != NULL) {
 				call[counter] = readcom(inp);
 				counter = counter + 1;
@@ -511,7 +533,6 @@ int main(int argc, char *argv[]) {
 		} while (inp != NULL);
 		fclose(comPtr);
 	}
-	
 	for (i=0;i<counter;i++){
 		if (call[i].first[0] ==  'L') {
 			map = loadmap(atoi(call[i].second),atoi(call[i].other));
