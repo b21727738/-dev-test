@@ -31,14 +31,24 @@ struct command {
 int linecount(FILE *fp) {
 	int line = 0;
 	char ch;
-	while(!feof(fp))
+	printf("In func=%d\n",fp);
+	char nl='\n';
+	int i=0;	
+	while(1)
 	{
+	
 		ch = fgetc(fp);
-		if (ch == '\n')
+		if (ch == EOF)
+		{
+			break;
+		}
+		else if(ch==10)
 		{
 			line++;
+		
 		}
 	}
+	printf("Succesfuly exited!\n");
 	return line;
 }
 
@@ -122,11 +132,11 @@ char*** loadmap(int x, int y) {
 	int i, j;
 	char ***map;
 
-	map = (char *)malloc(2 * sizeof(char *));
+	map = (char ***)malloc(2 * sizeof(char **));
 
 
 	for (i = 0; i<2; i++) {
-		map[i] = (char *)malloc(x*sizeof(char *));
+		map[i] = (char **)malloc(x*sizeof(char *));
 		for (j = 0; j<x; j++) {
 			map[i][j] = (char *)malloc(y*x*sizeof(char *));
 		}
@@ -150,9 +160,11 @@ struct FoM foP(char *input) {
 	int x1, y1;
 	cPtr = input;
 	mPtr = cPtr;
+	printf("FoP variables declared!\n");
 	while (*cPtr != ' ') {
 		cPtr = cPtr + 1;
 	}
+
 	letter = TaS(mPtr, cPtr - 1);
 	mPtr = cPtr + 1;
 	subj.name= letter;
@@ -166,9 +178,8 @@ struct FoM foP(char *input) {
 	subj.x = x1;
 	do {
 		cPtr = cPtr + 1;
-		if (*cPtr == '\n'){
-		*cPtr = ' ';
-		}
+		if (*cPtr == '\0')
+			break;
 	} while (*cPtr != ' ');
 
 	y = TaS(mPtr, cPtr - 1);
@@ -180,16 +191,21 @@ struct FoM foP(char *input) {
 }
 
 void put(char *input, char ***map) {
+	
+	printf("put command started\n");
 	char *cPtr, *mPtr, *command;
 	struct FoM temp;
 	int count = 0;
 	cPtr = input;
 	mPtr = input;
+	printf("variables declared!\n");
 	do {
 		
-		if (*cPtr == ' ') {
+		if (*cPtr == ' '){
 			if (count == 2) {
+				
 				command = TaS(mPtr, cPtr);
+				
 				mPtr = cPtr + 1;
 				count = 0;
 				temp = foP(command);
@@ -199,12 +215,18 @@ void put(char *input, char ***map) {
 				count = count + 1;
 			}
 		}
+		
 		cPtr = cPtr + 1;
+		
+		if(*cPtr == 0)
+			break;
 	} while (*cPtr != '\0');
-	command = TaS(mPtr, cPtr);			
-
+	
+	command = TaS(mPtr, cPtr);
 	temp = foP(command);
+	printf("test2\n");
 	map[1][temp.x][temp.y] = temp.letter;
+	printf("Put function successful!\n");
 
 }
 
@@ -470,14 +492,21 @@ void move (struct cha *chars,char ***map,int x,int y,char *input) {
 int main(int argc, char *argv[]) {
 	char *inp, ***map;
 	char kelam[100];
-	FILE *chPtr,*comPtr,*tPtr;
+	FILE *chPtr,*comPtr,*tPtr,*tPtr2;
 	
 	int counter,run=1,lcha=0,lcom=0,i,mapx,mapy;
 	tPtr = fopen(argv[1],"r");
+	printf("first=%d\n",tPtr);
 	lcha = linecount(tPtr) + 1;
 	struct cha *all = malloc(lcha * sizeof(struct cha));
-	tPtr = fopen(argv[2],"r");
-	lcom = linecount(tPtr) + 1;
+	fclose(tPtr);
+	tPtr=0;
+	tPtr2=0;
+	tPtr2 = fopen(argv[2],"r");
+	printf("first=%d second=%d\n",tPtr,tPtr2);
+	lcom = linecount(tPtr2) + 1;
+	fclose(tPtr2);
+	printf("Both files succesfuly read!\n");
 	struct command *call = malloc(lcom * sizeof(struct command));
  	if ((OP = fopen(argv[3],"w"))==NULL) {
 		printf("File could not be opened");
@@ -496,7 +525,7 @@ int main(int argc, char *argv[]) {
 		} while (inp != NULL);
 		fclose(chPtr);
 	}
-
+	printf("Characters saved!\n");
 	if ((comPtr = fopen(argv[2], "r")) == NULL) {
 		fprintf(OP,"File could not be opened\n");
 	}
@@ -511,17 +540,19 @@ int main(int argc, char *argv[]) {
 		} while (inp != NULL);
 		fclose(comPtr);
 	}
-	
+	printf("Commands saved!\n");
 	for (i=0;i<counter;i++){
 		if (call[i].first[0] ==  'L') {
 			map = loadmap(atoi(call[i].second),atoi(call[i].other));
 			mapx = atoi(call[i].second);
 			mapy = atoi(call[i].other);
 		}
+		printf("phase 1 %c done!\n",call[i].first[0]);
 		if (call[i].first[0] == 'P') {
 			put(call[i].other,map);
 			secmap(all,map,lcha,mapx,mapy);
 		}
+		printf("phase 2 %c done!\n",call[i].first[0]);
 		if (call[i].first[0] == 'S'){
 			int j;
 			if (call[i].second[1] == 'A') {
@@ -544,6 +575,7 @@ int main(int argc, char *argv[]) {
 				fprintf(OP,"\n");
 			}
 		}
+		printf("phase 3\n");
 		if (call[i].first[0] == 'A'){
 			
 			if (call[i].second[0] == 'H'){
